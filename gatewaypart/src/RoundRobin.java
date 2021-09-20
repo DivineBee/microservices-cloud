@@ -1,5 +1,4 @@
 import java.util.ArrayList;
-import java.util.LinkedHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class RoundRobin {
@@ -16,20 +15,23 @@ public class RoundRobin {
         lock = new ReentrantLock();
     }
 
-    public Server getIp() {
+    public String getServer() {
         synchronized (lock) {
             try {
                 Server currentServer = serversList.get(counter);
+                System.out.println("HERE" + serversList.size());
                 // String ip = (String) ipPool.keySet().toArray()[counter]; // get ip field from map
                 //String port = (String) ipPool.values().toArray()[counter];
                 // System.out.println(ipPool);
+                String ip = currentServer.getServerIP();
+                int port = currentServer.getServerPort();
 
                 // TODO Client connect to the currentServer
                 counter += 1;
                 if (counter == serversList.size()) {
                     counter = 0;
                 }
-                return currentServer;
+                return (String) ip + "," + port;
             } catch (Exception e) {
                 System.out.println("WENT WRONG");
                 return null;

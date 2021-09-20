@@ -1,37 +1,30 @@
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedHashMap;
-import java.util.stream.IntStream;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.io.PrintWriter;
+import java.net.Socket;
 
 public class Client {
+    private Socket clientSocket;
+    private PrintWriter out;
+    private BufferedReader in;
 
-    public static void main(String[] args) {
+    public void startConnection(String ip, int port) throws IOException {
+        clientSocket = new Socket(ip, port);
 
-        int NUM_OF_REQUESTS = 20;
-        Client client = new Client();
-
-        LinkedHashMap<String, String> networkAdresses = new LinkedHashMap<String, String>();
-        networkAdresses.put("192.168.0.1", "3000");
-        networkAdresses.put("192.168.0.2", "3001");
-        networkAdresses.put("192.168.0.3", "3002");
-        networkAdresses.put("192.168.0.4", "3003");
-
-        RoundRobin roundRobbin = new RoundRobin(ServerMain.serversList);
-        client.simulateConcurrentClientRequest(roundRobbin, NUM_OF_REQUESTS);
-
-        System.out.println("Main exits");
+        out = new PrintWriter(clientSocket.getOutputStream(), true);
+        in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
     }
 
-    private void simulateConcurrentClientRequest(RoundRobin roundRobbin, int numOfCalls) {
+    public String sendMessage(String msg) throws IOException {
+        out.println(msg);
+        String resp = in.readLine();
+        return resp;
+    }
 
-        IntStream
-                .range(0, numOfCalls)
-                .parallel()
-                .forEach(i ->
-                        System.out.println(
-                                "IP: " + roundRobbin.getIp()
-                                        + " --- Request from Client: " + i
-                                        + " --- [Thread: " + Thread.currentThread().getName() + "]")
-                );
+    public void stopConnection() throws IOException {
+        in.close();
+        out.close();
+        clientSocket.close();
     }
 }

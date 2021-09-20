@@ -16,8 +16,8 @@ public class ClientTEST {
 //        networkAdresses.put("192.168.0.3", "3002");
 //        networkAdresses.put("192.168.0.4", "3003");
 
-        RoundRobin roundRobbin = new RoundRobin(ServerMain.serversList);
-        client.simulateConcurrentClientRequest(roundRobbin, NUM_OF_REQUESTS);
+   //     RoundRobin roundRobbin = new RoundRobin(ServerMain.serversList);
+   //     client.simulateConcurrentClientRequest(roundRobbin, NUM_OF_REQUESTS);
 
         System.out.println("Main exits");
     }

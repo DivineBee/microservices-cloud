@@ -1,17 +1,15 @@
 import java.io.IOException;
+import java.util.LinkedHashMap;
 
 public class ClientMain {
     public static void main(String[] args) throws IOException {
-//        Client client1 = new Client();
-////        client1.startConnection("127.0.0.1", 6666);
-////        String msg1 = client1.sendMessage("hello");
-////        String msg2 = client1.sendMessage("world");
-////        String terminate = client1.sendMessage(".");
 
-        RoundRobin roundRobin = new RoundRobin(ServerMain.serversList);
+        RoundRobin roundRobin = new RoundRobin();
         String[] address = roundRobin.getServer().split(",");
         String ip = address[0];
         int port = Integer.parseInt(address[1]);
+        System.out.println("IP " + ip);
+        System.out.println("PORT " + port);
         Client client = new Client();
         client.startConnection(ip, port);
     }

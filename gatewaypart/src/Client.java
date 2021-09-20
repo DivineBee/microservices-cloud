@@ -8,9 +8,11 @@ public class Client {
     private Socket clientSocket;
     private PrintWriter out;
     private BufferedReader in;
+    private String ip;
+    private int port;
 
     public void startConnection(String ip, int port) throws IOException {
-        clientSocket = new Socket(ip, port);
+        clientSocket = new Socket(this.ip = ip, this.port =port);
 
         out = new PrintWriter(clientSocket.getOutputStream(), true);
         in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
@@ -26,5 +28,21 @@ public class Client {
         in.close();
         out.close();
         clientSocket.close();
+    }
+
+    public String getIp() {
+        return ip;
+    }
+
+    public void setIp(String ip) {
+        this.ip = ip;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
     }
 }

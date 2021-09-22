@@ -13,11 +13,11 @@ public class Server {
     // number of maximum connected clients
     private static final int SERVER_CAPACITY = 100;
 
-    //  constructor defining port of listening incoming requests
-//    public Server(int whichPortToOpen) throws IOException {
-//        serverSocket = new ServerSocket(whichPortToOpen, SERVER_CAPACITY);
-//        this.serverPort = whichPortToOpen;
-//    }
+    //constructor defining port of listening incoming requests
+    public Server(int whichPortToOpen) throws IOException {
+        serverSocket = new ServerSocket(whichPortToOpen, SERVER_CAPACITY);
+        this.serverPort = whichPortToOpen;
+    }
 
     public void start(int port) throws IOException {
         serverSocket = new ServerSocket(port);
@@ -41,6 +41,7 @@ public class Server {
 
         public void run(){
             try {
+                System.out.println(clientSocket.getLocalAddress());
                 out = new PrintWriter(clientSocket.getOutputStream(), true);
                 in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 

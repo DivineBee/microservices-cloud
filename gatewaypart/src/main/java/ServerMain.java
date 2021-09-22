@@ -6,10 +6,10 @@ public class ServerMain {
     public static ArrayList<Server> serversList = new ArrayList<>();
     public static LinkedHashMap<String, String> networkAdresses = new LinkedHashMap<String, String>();
     static {
-        networkAdresses.put("192.168.0.1", "3001");
-        networkAdresses.put("192.168.0.2", "3002");
-        networkAdresses.put("192.168.0.3", "3003");
-        networkAdresses.put("192.168.0.4", "3004");
+        networkAdresses.put("127.0.0.1", "3001");
+        networkAdresses.put("127.0.0.1", "3002");
+        networkAdresses.put("127.0.0.1", "3003");
+        networkAdresses.put("127.0.0.1", "3004");
     }
 
     public static void createAndStartServers(LinkedHashMap<String, String> listOfAddresses) {
@@ -18,12 +18,14 @@ public class ServerMain {
                 System.out.println("size" + listOfAddresses.size());
                 int port = Integer.parseInt((String) listOfAddresses.values().toArray()[i]);
                 String ip = (String) listOfAddresses.keySet().toArray()[i]; // get ip field from map
-                Server server = new Server();
+                Server server = new Server(port);
                 System.out.println(port);
+                System.out.println("----STARTING");
                 server.start(port);
                 server.setServerIP(ip);
-                server.setServerPort(port);
+                //server.setServerPort(port);
                 serversList.add(server);
+                System.out.println("----SUCCESS");
             }
         }catch (IOException e){
             System.err.println("WRONGWRONG");

@@ -3,7 +3,7 @@ from app.api.docs import docs
 from app.api.db import metadata, database, engine
 
 metadata.create_all(engine)
-app = FastAPI()
+app = FastAPI(openapi_url="/api/v1/docs/openapi.json", docs_url="/api/v1/docs/docs")
 
 
 @app.on_event("startup")

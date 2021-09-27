@@ -10,7 +10,7 @@
       </profile>
     </annotationProcessing>
     <bytecodeTargetLevel>
-      <module name="gatewaypart" target="8" />
+      <module name="gatewaypart" target="11" />
       <module name="mavendependencies" target="8" />
     </bytecodeTargetLevel>
   </component>

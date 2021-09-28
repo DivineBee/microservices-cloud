@@ -16,11 +16,11 @@ public class Connection {
 
     private static final String USER_API_URL = "http://localhost:8080/api/v1/user/openapi.json";
     private static final String DOCS_API_URL = "http://localhost:8080/api/v1/docs/";
-    private static final String SERV_API_URL = "http://localhost:5001/api/docs.json";
+    private static final String GATEWAY_API_URL = "http://localhost:5001/api/requests.json";
 
     public static void main(String[] args) {
         HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(SERV_API_URL)).build();
+        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(GATEWAY_API_URL)).build();
 
         client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
                 .thenApply(HttpResponse::body)

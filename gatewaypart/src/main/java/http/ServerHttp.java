@@ -2,6 +2,7 @@ package http;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 
 public class ServerHttp {
     private int port;
@@ -15,7 +16,7 @@ public class ServerHttp {
     void start(){
         try (var server = new ServerSocket(this.port)){
             while (true) {
-                var socket = server.accept();
+                Socket socket = server.accept();
                 var thread = new Handler(socket, this.directory);
                 thread.start();
             }
@@ -28,5 +29,6 @@ public class ServerHttp {
         var port = 5001;
         var directory = "D:\\Git\\microservices_lab1\\gatewaypart\\src\\main\\java\\files";
         new ServerHttp(port, directory).start();
+
     }
 }

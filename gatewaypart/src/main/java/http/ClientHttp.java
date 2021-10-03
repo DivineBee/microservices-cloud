@@ -6,20 +6,31 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
+import java.util.Random;
 import java.util.Scanner;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class ClientHttp {
-    private int clientId;
+    private static final int clientId = ThreadLocalRandom.current().nextInt(1, 1000 + 1);
     private int clientAddress;
 
-    private static final String GATEWAY_API_URL = "http://localhost:5001/api/requests.json";
+    private static final String GATEWAY_API_URL = "http://localhost:5001/api/file.txt";
 
-    private static final HttpClient httpClient = HttpClient.newBuilder()
-            .version(HttpClient.Version.HTTP_2)
-            .connectTimeout(Duration.ofMinutes(2))
-            .build();
+//    private static final HttpClient httpClient = HttpClient.newBuilder()
+//            .version(HttpClient.Version.HTTP_2)
+//            .connectTimeout(Duration.ofMinutes(2))
+//            .build();
 
     public static void main(String[] args) throws IOException, InterruptedException {
+        HttpClient httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_1_1)
+                .connectTimeout(Duration.ofMinutes(2))
+                //.cookieHandler(CookieHandler.getDefault())
+              //  .executor(Executors.newFixedThreadPool(3))
+                .build();
+
         boolean isClientOn = true;
         while (isClientOn) {
             System.out.println("WELCOME TO YOUR CONSOLE-DRIVE!");
@@ -39,107 +50,127 @@ public class ClientHttp {
             switch (userAnswer){
                 case(1):
                     System.out.println("Input user's email");
-                    String email = userInput.nextLine();
+                    String email = userInput.next();
                     System.out.println("Input user's name");
-                    String name = userInput.nextLine();
+                    String name = userInput.next();
+                    String json = "{" +
+                            "\"email\":" + "\"" + email + "\"," +
+                            "\"name\":" + "\"" + name + "\"," +
+                            "\"clientId\":" + "\"" + clientId + "\"," +
+                            "\"command\":" + "\"1\"" +
+                            "}";
 
-                    String json = new StringBuilder()
-                            .append("{")
-                            .append("\"email\":" + "\"" + email + "\"" +",")
-                            .append("\"name\":" + "\"" + name + "\"")
-                            .append("}").toString();
-
-                    sendClientRequest(json);
+                    sendClientRequest(json, httpClient);
                     break;
 
                 case(2):
                     System.out.println("Input user's id");
-                    String user_id = userInput.nextLine();
-                    sendPathRequest(user_id);
+                    String user_id = userInput.next();
+
+                    json = "{" +
+                            "\"userId\":" + "\"" + user_id + "\"," +
+                            "\"clientId\":" + "\"" + clientId + "\"," +
+                            "\"command\":" + "\"2\"" +
+                            "}";
+
+                    sendClientRequest(json, httpClient);
                     break;
 
                 case(3):
                     String allFiles = "getfiles";
-                    sendPathRequest(allFiles);
+                    json = "{" +
+                            "\"allFiles\":" + "\"" + allFiles + "\"," +
+                            "\"clientId\":" + "\"" + clientId + "\"," +
+                            "\"command\":" + "\"3\"" +
+                            "}";
+
+                    sendClientRequest(json, httpClient);
                     break;
 
                 case(4):
                     System.out.println("Input file's title");
-                    String title = userInput.nextLine();
+                    String title = userInput.next();
                     System.out.println("Input file's text");
-                    String text = userInput.nextLine();
+                    String text = userInput.next();
                     System.out.println("Input file's user id");
-                    user_id = userInput.nextLine();
+                    user_id = userInput.next();
 
-                    json = new StringBuilder()
-                            .append("{")
-                            .append("\"title\":" + "\"" + title + "\"" + ",")
-                            .append("\"text\":" + "\"" + text + "\"" + ",")
-                            .append("\"user_id\":" + "\"" + user_id + "\"")
-                            .append("}").toString();
+                    json = "{" +
+                            "\"title\":" + "\"" + title + "\"," +
+                            "\"text\":" + "\"" + text + "\"," +
+                            "\"userId\":" + "\"" + user_id + "\"," +
+                            "\"clientId\":" + "\"" + clientId + "\"," +
+                            "\"command\":" + "\"4\"" +
+                            "}";
 
-                    sendClientRequest(json);
+                    sendClientRequest(json, httpClient);
                     break;
 
                 case(5):
                     System.out.println("Input file's id");
-                    String file_id = userInput.nextLine();
+                    String file_id = userInput.next();
 
-                    sendPathRequest(file_id);
+                    json = "{" +
+                            "\"fileId\":" + "\"" + file_id + "\"," +
+                            "\"clientId\":" + "\"" + clientId + "\"," +
+                            "\"command\":" + "\"5\"" +
+                            "}";
+
+                    sendClientRequest(json, httpClient);
                     break;
+
                 case(6):
                     System.out.println("Update file's fields title");
                     title = userInput.next();
                     System.out.println("Update file's text");
                     text = userInput.next();
 
-                    json = new StringBuilder()
-                            .append("{")
-                            .append("\"title\":" + "\"" + title + "\"" + ",")
-                            .append("\"text\":" + "\"" + text + "\"")
-                            .append("}").toString();
+                    json = "{" +
+                            "\"title\":" + "\"" + title + "\"," +
+                            "\"text\":" + "\"" + text + "\"," +
+                            "\"clientId\":" + "\"" + clientId + "\"," +
+                            "\"command\":" + "\"6\"" +
+                            "}";
 
-                    //sendClientRequest(json);
-                    getResponse(sendClientRequest(json));
-                    System.out.println();
+                    sendClientRequest(json, httpClient);
                     break;
 
                 case(7):
                     System.out.println("Which file to delete? Enter id");
-                    file_id = userInput.nextLine();
+                    file_id = userInput.next();
 
-                    sendPathRequest(file_id);
+                    json = "{" +
+                            "\"fileId\":" + "\"" + file_id + "\"," +
+                            "\"clientId\":" + "\"" + clientId + "\"," +
+                            "\"command\":" + "\"7\"" +
+                            "}";
+
+                    sendClientRequest(json, httpClient);
                     break;
                 case(8):
                     isClientOn = false;
+                    break;
             }
         }
-
     }
 
-    private static HttpRequest sendClientRequest(String json){
+    private static void sendClientRequest(String json, HttpClient httpClient){
         HttpRequest request = HttpRequest.newBuilder()
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .uri(URI.create(GATEWAY_API_URL))
-                .setHeader("User-Agent", "Java 11 HttpClient") // add request header
                 .header("Content-Type", "application/json")
                 .build();
-        return request;
+
+        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
+                .thenApply(HttpResponse::body)
+                .exceptionally(e -> "Error: " + e.getMessage())
+                .thenAccept(System.out::println);
     }
 
-    private static HttpRequest sendPathRequest(String path){
-        HttpRequest request = HttpRequest.newBuilder()
-                .POST(HttpRequest.BodyPublishers.ofString(path))
-                .uri(URI.create(GATEWAY_API_URL))
-                .setHeader("User-Agent", "Java 11 HttpClient") // add request header
-                .header("Content-Type", "text/plain")
-                .build();
-        return request;
-    }
-
-    private static void getResponse(HttpRequest request) throws IOException, InterruptedException {
+    private static void getResponse(HttpRequest request, HttpClient httpClient) throws IOException, InterruptedException {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        System.out.println("Status code" + response.statusCode()); // print status code
+        System.out.println("Status code " + response.statusCode()); // print status code
         System.out.println("Response body " + response.body()); // print response body
+        System.out.println("Headers " + response.headers()); // print response headers
     }
 }

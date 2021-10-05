@@ -2,11 +2,14 @@ package http;
 
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+import org.apache.http.HttpResponse;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.net.http.HttpRequest;
 import java.util.Arrays;
+import java.util.HashMap;
 
 public class RequestHandler implements HttpHandler {
     @Override
@@ -16,9 +19,9 @@ public class RequestHandler implements HttpHandler {
             System.out.println(requestBody);
             System.out.println(httpExchange.getRequestURI());
             System.out.println(httpExchange.getRequestMethod());
-            RequestParser.parse(requestBody);////////
+            HashMap<String, String> responseBody = RequestParser.processRequest(requestBody);
             // send response from microservice
-            sendResponse(httpExchange, 200, "Request Received");
+            sendResponse(httpExchange, 200, "Response " + responseBody);
         } catch (Exception e) {
             e.printStackTrace();
         } finally {

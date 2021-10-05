@@ -16,7 +16,7 @@ public class ClientHttp {
     private static final int clientId = ThreadLocalRandom.current().nextInt(1, 1000 + 1);
     private int clientAddress;
 
-    private static final String GATEWAY_API_URL = "http://localhost:5001/api/file.txt";
+    private static final String GATEWAY_API_URL = "http://localhost:5001/api/requests.json";
 
 //    private static final HttpClient httpClient = HttpClient.newBuilder()
 //            .version(HttpClient.Version.HTTP_2)

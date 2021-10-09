@@ -6,10 +6,7 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
-import java.util.Random;
 import java.util.Scanner;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ClientHttp {
@@ -18,17 +15,11 @@ public class ClientHttp {
 
     private static final String GATEWAY_API_URL = "http://localhost:5001/api/requests.json";
 
-//    private static final HttpClient httpClient = HttpClient.newBuilder()
-//            .version(HttpClient.Version.HTTP_2)
-//            .connectTimeout(Duration.ofMinutes(2))
-//            .build();
-
     public static void main(String[] args) throws IOException, InterruptedException {
         HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofMinutes(2))
-                //.cookieHandler(CookieHandler.getDefault())
-              //  .executor(Executors.newFixedThreadPool(3))
+                //  .executor(Executors.newFixedThreadPool(3))
                 .build();
 
         boolean isClientOn = true;
@@ -47,8 +38,8 @@ public class ClientHttp {
 
             int userAnswer = userInput.nextInt();  // Read user input
 
-            switch (userAnswer){
-                case(1):
+            switch (userAnswer) {
+                case (1):
                     System.out.println("Input user's email");
                     String email = userInput.next();
                     System.out.println("Input user's name");
@@ -63,7 +54,7 @@ public class ClientHttp {
                     sendClientRequest(json, httpClient);
                     break;
 
-                case(2):
+                case (2):
                     System.out.println("Input user's id");
                     String user_id = userInput.next();
 
@@ -76,7 +67,7 @@ public class ClientHttp {
                     sendClientRequest(json, httpClient);
                     break;
 
-                case(3):
+                case (3):
                     String allFiles = "getfiles";
                     json = "{" +
                             "\"allFiles\":" + "\"" + allFiles + "\"," +
@@ -87,7 +78,7 @@ public class ClientHttp {
                     sendClientRequest(json, httpClient);
                     break;
 
-                case(4):
+                case (4):
                     System.out.println("Input file's title");
                     String title = userInput.next();
                     System.out.println("Input file's text");
@@ -106,7 +97,7 @@ public class ClientHttp {
                     sendClientRequest(json, httpClient);
                     break;
 
-                case(5):
+                case (5):
                     System.out.println("Input file's id");
                     String file_id = userInput.next();
 
@@ -119,7 +110,7 @@ public class ClientHttp {
                     sendClientRequest(json, httpClient);
                     break;
 
-                case(6):
+                case (6):
                     System.out.println("Update file's fields title");
                     title = userInput.next();
                     System.out.println("Update file's text");
@@ -135,7 +126,7 @@ public class ClientHttp {
                     sendClientRequest(json, httpClient);
                     break;
 
-                case(7):
+                case (7):
                     System.out.println("Which file to delete? Enter id");
                     file_id = userInput.next();
 
@@ -147,14 +138,14 @@ public class ClientHttp {
 
                     sendClientRequest(json, httpClient);
                     break;
-                case(8):
+                case (8):
                     isClientOn = false;
                     break;
             }
         }
     }
 
-    private static void sendClientRequest(String json, HttpClient httpClient){
+    private static void sendClientRequest(String json, HttpClient httpClient) {
         HttpRequest request = HttpRequest.newBuilder()
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .uri(URI.create(GATEWAY_API_URL))

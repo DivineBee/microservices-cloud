@@ -7,41 +7,58 @@ import org.json.JSONObject;
 
 import java.io.IOException;
 import java.net.URI;
+import java.net.URLEncoder;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class Connection {
 
-    private static final String USER_API_URL = "http://localhost:8080/api/v1/user/1";
+    private static final String USER_API_URL = "http://localhost:8080/api/v1/user";
     private static final String DOCS_API_URL = "http://localhost:8080/api/v1/docs/";
     private static final String GATEWAY_API_URL = "http://localhost:5001/api/requests.json";
 
     public static void main(String[] args) throws IOException, InterruptedException {
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request = HttpRequest.newBuilder().uri(URI.create(DOCS_API_URL)).build();
+        HttpClient httpClient = HttpClient.newHttpClient();
+        //HttpRequest request = HttpRequest.newBuilder().uri(URI.create(DOCS_API_URL)).build();
 
-        client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                //.thenApply(Connection::parse)
-                .thenAccept(System.out::println)
-                .join();
+        // form parameters
+        Map<Object, Object> data = new HashMap<>();
+        data.put("name", "Jack");
+        data.put("email", "jack@mail.com");
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .POST(ofFormData(data))
+                .uri(URI.create(USER_API_URL))
+                .header("Content-Type", "application/json")
+                .build();
+
+        HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+
+        // print status code
+        System.out.println(response.statusCode());
+
+        // print response body
+        System.out.println(response.body());
 
     }
 
-//    public static String parse(String responseBody) {
-//        JSONArray docs = new JSONArray(responseBody);
-//        String title = null;
-//        String text = null;
-//        for (int i = 0; i < docs.length(); i++) {
-//            JSONObject doc = docs.getJSONObject(i);
-////            int id = doc.getInt("id");
-////            JSONArray user_id = doc.getJSONArray("user_id");
-//            title = doc.getString("title");
-//            text = doc.getString("text");
-//            System.out.println(title + " " + text);
-//        }
-//        return null;
-//    }
+    // Sample: 'password=123&custom=secret&username=abc&ts=1570704369823'
+    public static HttpRequest.BodyPublisher ofFormData(Map<Object, Object> data) {
+        var builder = new StringBuilder();
+        for (Map.Entry<Object, Object> entry : data.entrySet()) {
+            if (builder.length() > 0) {
+                builder.append("&");
+            }
+            builder.append(URLEncoder.encode(entry.getKey().toString(), StandardCharsets.UTF_8));
+            builder.append("=");
+            builder.append(URLEncoder.encode(entry.getValue().toString(), StandardCharsets.UTF_8));
+        }
+        return HttpRequest.BodyPublishers.ofString(builder.toString());
+    }
+
 }

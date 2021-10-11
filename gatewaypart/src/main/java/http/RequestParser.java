@@ -22,6 +22,7 @@ public class RequestParser {
     private static final String DOCS_API_URL = "http://localhost:8080/api/v1/docs/";
     private static final String DOCS_API_URL2 = "http://localhost:9090/api/v2/docs/";
 
+    // primitive of service registry
     private static final ArrayList<String> addressUserPool = new ArrayList <>();
     static {
         addressUserPool.add(USER_API_URL);
@@ -36,6 +37,20 @@ public class RequestParser {
 
     private static Cache<String, HashMap<String, String>> requestsCache = new Cache<>(400);
 
+    /**
+     * Helper method of processing client's request, such as reading its contents and parsing.
+     * Because client sends a specific request, the gateway has to decide what to do with it.
+     * This is done through the reading of incoming JSON data. It's decomposed and based on the
+     * client command the next steps are performed. Such as extracting useful information to add to
+     * the uri path, to pick the available server, to insert and retrieve from the cache.
+     * After that the method returns a hashmap back to the caller.
+     * @param responseBody
+     * @return HashMap<String, String>
+     * @throws IOException
+     * @throws InterruptedException
+     * @throws ExecutionException
+     * @throws TimeoutException
+     */
     public static HashMap<String, String> processRequest(String responseBody) throws IOException, InterruptedException, ExecutionException, TimeoutException {
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request;
@@ -50,18 +65,32 @@ public class RequestParser {
 
         } else if (userCommand == 2){
             int userId = body.getInt("userId");
-            request = HttpRequest.newBuilder().uri(URI.create(USER_API_URL + userId)).build();
+            String roundedAddress = HTTPListener.getIp(addressUserPool);
+            request = HttpRequest.newBuilder().uri(URI.create(roundedAddress + userId)).build();
 
-            client.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                    .thenApply(HttpResponse::body)
-                    //.thenApply(Connection::parse)
-                    .thenAccept(System.out::println)
-                    .join();
+            String requestUri = request.uri().toString();
 
-            return null;
+            if (requestsCache.get(requestUri) != null){
+                System.out.println("HI FROM CACHE");
+                return requestsCache.get(requestUri);
+            } else {
+                CompletableFuture<HttpResponse<String>> response =
+                        client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+
+                HashMap<String, String> result = response.thenApply(HttpResponse::body)
+                        .thenApply(RequestParser::parseUser)
+                        .get(5, TimeUnit.SECONDS);
+
+                System.out.println("result " + result);
+
+                requestsCache.put(requestUri, result);
+                System.out.println("HI I JUST JOINED THE CACHE");
+                return result;
+            }
         } else if (userCommand == 3){
             String roundedAddress = HTTPListener.getIp(addressDocPool);
-            request = HttpRequest.newBuilder().uri(URI.create(roundedAddress)).build();
+            request = HttpRequest.newBuilder().uri(URI.create(roundedAddress))
+                    .version(HttpClient.Version.HTTP_1_1).build();
             String requestUri = request.uri().toString();
 
             if (requestsCache.get(requestUri) != null){
@@ -85,13 +114,11 @@ public class RequestParser {
         return null;
     }
 
-    private static void sendClientRequest(String json, HttpClient httpClient, HttpRequest request){
-        httpClient.sendAsync(request, HttpResponse.BodyHandlers.ofString())
-                .thenApply(HttpResponse::body)
-                .exceptionally(e -> "Error: " + e.getMessage())
-                .thenAccept(System.out::println);
-    }
-
+    /**
+     * Method for parsing the incoming json for the client
+     * @param responseBody
+     * @return HashMap<String, String>
+     */
     public static HashMap<String, String> parse(String responseBody) {
         HashMap<String, String> result = new HashMap();
         JSONArray docs = new JSONArray(responseBody);
@@ -106,7 +133,21 @@ public class RequestParser {
             result.put(title, text);
             System.out.println(title + " " + text);
         }
-        System.out.println("RESULT" + result);
+        return result;
+    }
+
+    public static HashMap<String, String> parseUser(String responseBody) {
+        HashMap<String, String> result = new HashMap();
+        System.out.println("r" + responseBody);
+        JSONObject user = new JSONObject(responseBody);
+
+        String name = null;
+        String email = null;
+        name = user.getString("name");
+        email = user.getString("text");
+        result.put(name, email);
+        System.out.println(name + " " + email);
+
         return result;
     }
 }

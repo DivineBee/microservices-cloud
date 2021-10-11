@@ -7,19 +7,25 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.time.Duration;
 import java.util.Scanner;
+import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ClientHttp {
     private static final int clientId = ThreadLocalRandom.current().nextInt(1, 1000 + 1);
-    private int clientAddress;
 
     private static final String GATEWAY_API_URL = "http://localhost:5001/api/requests.json";
 
+    /**
+     * Client main method with requests being sent from console
+     * @param args
+     * @throws IOException
+     * @throws InterruptedException
+     */
     public static void main(String[] args) throws IOException, InterruptedException {
         HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofMinutes(2))
-                //  .executor(Executors.newFixedThreadPool(3))
+                .executor(Executors.newFixedThreadPool(3))
                 .build();
 
         boolean isClientOn = true;
@@ -145,10 +151,16 @@ public class ClientHttp {
         }
     }
 
+    /**
+     * each client request is build and sent as a post request to the gateway
+     * @param json
+     * @param httpClient
+     */
     private static void sendClientRequest(String json, HttpClient httpClient) {
         HttpRequest request = HttpRequest.newBuilder()
                 .POST(HttpRequest.BodyPublishers.ofString(json))
                 .uri(URI.create(GATEWAY_API_URL))
+                .version(HttpClient.Version.HTTP_1_1)
                 .header("Content-Type", "application/json")
                 .build();
 
@@ -158,6 +170,13 @@ public class ClientHttp {
                 .thenAccept(System.out::println);
     }
 
+    /**
+     * Method of getting status code, response, body and headers
+     * @param request
+     * @param httpClient
+     * @throws IOException
+     * @throws InterruptedException
+     */
     private static void getResponse(HttpRequest request, HttpClient httpClient) throws IOException, InterruptedException {
         HttpResponse<String> response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         System.out.println("Status code " + response.statusCode()); // print status code

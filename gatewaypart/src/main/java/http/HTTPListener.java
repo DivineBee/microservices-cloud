@@ -12,6 +12,14 @@ public class HTTPListener {
     public static int COUNTER = 0;
     private static final Object lock = new Object();
 
+    /**
+     * Runner method of the gateway, opens up the connection to be available for the clients.
+     * Creates the http server on the specified port, with the second parameter being the backlog.
+     * Backlog represents the maximum number of queued incoming connections.
+     * by setting the executor it puts 5 threads on which each connection will operate into
+     * the thread pool so with the possibility to reuse them.
+     * @param args
+     */
     public static void main(String[] args) {
         HttpServer httpServer;
         try {
@@ -23,7 +31,12 @@ public class HTTPListener {
             e.printStackTrace();
         }
     }
-    //Round Robin method
+
+    /**
+     * Round Robin method, picks the next available server from the pool of servers
+     * @param ipList
+     * @return String
+     */
     public static synchronized String getIp(ArrayList<String> ipList) {
         synchronized (lock) {
             try {

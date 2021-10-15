@@ -40,9 +40,9 @@ public class ClientHttp {
                     "5. Get a certain file\n" +
                     "6. Update a file\n" +
                     "7. Delete a file\n" +
-                    "8. Exit\n" +
-                    "--------------------\n" +
-                    "9. Administer Cache");
+                    "8. Exit\n");
+               //     "--------------------\n" +
+                   // "9. Administer Cache");
 
             int userAnswer = userInput.nextInt();  // Read user input
 

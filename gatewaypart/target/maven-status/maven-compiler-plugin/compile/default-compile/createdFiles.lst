@@ -1,7 +1,0 @@
-http\User.class
-http\Connection.class
-http\Handler.class
-http\ServerHttp.class
-http\Handler$1.class
-http\ClientHttp.class
-http\Document.class

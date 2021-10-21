@@ -8,6 +8,11 @@ import java.io.OutputStream;
 import java.util.HashMap;
 
 public class RequestHandler implements HttpHandler {
+    public static final int THRESHOLD = 5;
+    public static int FAILURE_COUNT = 0;
+    public static long lastFailureTime;
+    public static long retryTimePeriod;
+    public static State state;
     /**
      * handles the incoming request from client, turns the load balancing and sends back and forth all the
      * requests from the system (This is the Gateway). It receives the requests and responses.
@@ -77,4 +82,25 @@ public class RequestHandler implements HttpHandler {
             }
         }
     }
+    
+    public static void circuitBreak(int counter, String address){
+        if (counter > THRESHOLD) {
+            state = State.OPEN;
+            if ((System.nanoTime() - lastFailureTime) > retryTimePeriod){
+                state = State.HALF_OPEN; // Waited long enough
+                RequestParser.addressDocPool.remove(address);
+            } else {
+                state = State.OPEN; // Possibly still down
+            }
+        } else {
+            state = State.CLOSED;
+            RequestParser.addressDocPool.add(address);
+        }
+    }
+}
+
+enum State {
+    CLOSED,
+    OPEN,
+    HALF_OPEN
 }

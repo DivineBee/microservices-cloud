@@ -3,6 +3,7 @@ package http;
 import cache.Cache;
 import cache.CacheItem;
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -60,59 +61,67 @@ public class RequestParser {
 
         System.out.println("response body" + responseBody);
         //check which command then proceed
-        final JSONObject body = new JSONObject(responseBody);
-        int userCommand = body.getInt("command");
-        String clientId = body.getString("clientId");
+        try {
+            final JSONObject body = new JSONObject(responseBody);
+            int userCommand = body.getInt("command");
+            String clientId = body.getString("clientId");
 
-        if (userCommand == 1){
+            if (userCommand == 1){
 
-        } else if (userCommand == 2){
-            int userId = body.getInt("userId");
-            String roundedAddress = HTTPListener.getIp(addressUserPool);
-            request = HttpRequest.newBuilder().uri(URI.create(roundedAddress + userId)).build();
+            } else if (userCommand == 2){
+                int userId = body.getInt("userId");
+                String roundedAddress = HTTPListener.getIp(addressUserPool);
+                request = HttpRequest.newBuilder().uri(URI.create(roundedAddress + userId)).build();
 
-            String requestUri = request.uri().toString();
+                String requestUri = request.uri().toString();
 
-            if (requestsCache.get(requestUri) != null){
-                System.out.println("HI FROM CACHE");
-                return requestsCache.get(requestUri);
-            } else {
-                CompletableFuture<HttpResponse<String>> response =
-                        client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+                if (requestsCache.get(requestUri) != null){
+                    System.out.println("HI FROM CACHE");
+                    return requestsCache.get(requestUri);
+                } else {
+                    CompletableFuture<HttpResponse<String>> response =
+                            client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
 
-                HashMap<String, String> result = response.thenApply(HttpResponse::body)
-                        .thenApply(RequestParser::parseUser)
-                        .get(5, TimeUnit.SECONDS);
+                    HashMap<String, String> result = response.thenApply(HttpResponse::body)
+                            .thenApply(RequestParser::parseUser)
+                            .get(5, TimeUnit.SECONDS);
 
-                System.out.println("result " + result);
+                    System.out.println("result " + result);
 
-                requestsCache.put(requestUri, result);
-                System.out.println("HI I JUST JOINED THE CACHE");
-                return result;
+                    requestsCache.put(requestUri, result);
+                    System.out.println("HI I JUST JOINED THE CACHE");
+                    return result;
+                }
+            } else if (userCommand == 3) {
+                String roundedAddress = HTTPListener.getIp(addressDocPool);
+                request = HttpRequest.newBuilder().uri(URI.create(roundedAddress))
+                        .version(HttpClient.Version.HTTP_1_1).build();
+                String requestUri = request.uri().toString();
+
+                if (requestsCache.get(requestUri) != null) {
+                    System.out.println("HI FROM CACHE");
+                    return requestsCache.get(requestUri);
+                } else {
+                    CompletableFuture<HttpResponse<String>> response =
+                            client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+
+                    HashMap<String, String> result = response.thenApply(HttpResponse::body)
+                            .thenApply(RequestParser::parse)
+                            .get(5, TimeUnit.SECONDS);
+
+                    System.out.println("result " + result);
+
+                    requestsCache.put(requestUri, result);
+                    System.out.println("HI I JUST JOINED THE CACHE");
+                    return result;
+                }
             }
-        } else if (userCommand == 3) {
+        } catch (JSONException ex){
+            System.out.println("JSON haven't been parsed");
+            RequestHandler.FAILURE_COUNT += 1;
             String roundedAddress = HTTPListener.getIp(addressDocPool);
-            request = HttpRequest.newBuilder().uri(URI.create(roundedAddress))
-                    .version(HttpClient.Version.HTTP_1_1).build();
-            String requestUri = request.uri().toString();
-
-            if (requestsCache.get(requestUri) != null) {
-                System.out.println("HI FROM CACHE");
-                return requestsCache.get(requestUri);
-            } else {
-                CompletableFuture<HttpResponse<String>> response =
-                        client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-
-                HashMap<String, String> result = response.thenApply(HttpResponse::body)
-                        .thenApply(RequestParser::parse)
-                        .get(5, TimeUnit.SECONDS);
-
-                System.out.println("result " + result);
-
-                requestsCache.put(requestUri, result);
-                System.out.println("HI I JUST JOINED THE CACHE");
-                return result;
-            }
+            RequestHandler.circuitBreak(RequestHandler.FAILURE_COUNT, roundedAddress);
+            System.out.println("ROUNDED" + roundedAddress);
         }
 //        } else if (userCommand == 9){
 //            String query = queryCache(requestsCache);

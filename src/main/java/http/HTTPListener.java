@@ -2,11 +2,11 @@ package http;
 
 import cache.Cache;
 import cache.CacheItem;
+import circuit.CircuitBreaker;
 import com.sun.net.httpserver.HttpServer;
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Scanner;
 import java.util.concurrent.Executors;
@@ -23,6 +23,13 @@ public class HTTPListener {
         allowedUsers.put("jessica02admin", "Hunter23");
     }
 
+    public static CircuitBreaker circuitBreaker = new CircuitBreaker(3000,
+            2,2000*1000*1000);
+
+    public static CircuitBreaker getCircuitBreaker() {
+        return circuitBreaker;
+    }
+
     /**
      * Runner method of the gateway, opens up the connection to be available for the clients.
      * Creates the http server on the specified port, with the second parameter being the backlog.
@@ -32,6 +39,7 @@ public class HTTPListener {
      * @param args
      */
     public static void main(String[] args) {
+
         HttpServer httpServer;
         Scanner binaryAnswer = new Scanner(System.in);
         try {
@@ -81,7 +89,18 @@ public class HTTPListener {
             httpServer = null;
         }
     }
-
+    /* query language is the following:
+            Insert data:
+                put into <key> <value>
+            Get cache by key:
+                get <key>
+            Delete cache node:
+                delete <key>
+            Get the cache size:
+                show size
+            Display all available data:
+                show all
+         */
     public static void queryCache(Cache<String, HashMap<String, String>> cache){
         boolean isUserAuthenticated = authenticateUserCache();
         while (isUserAuthenticated) {
@@ -118,7 +137,6 @@ public class HTTPListener {
     }
 
     public static boolean authenticateUserCache(){
-        boolean isAuthenticated = false;
         Scanner userInput = new Scanner(System.in);
         System.out.println("Please insert username");
         String username = userInput.next();
@@ -126,9 +144,8 @@ public class HTTPListener {
         if (allowedUsers.containsKey(username)) {
             System.out.println("Please insert password");
             String password = userInput.next();
-            if (allowedUsers.get(username).equals(password)){
-                return isAuthenticated = true;
-            }
+            if (allowedUsers.get(username).equals(password))
+                return true;
         }
         return false;
     }

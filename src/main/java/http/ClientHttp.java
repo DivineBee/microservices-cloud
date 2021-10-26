@@ -1,5 +1,7 @@
 package http;
 
+import circuit.CircuitBreaker;
+
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -11,6 +13,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 
 public class ClientHttp {
+    public static int failureCount;
     private static final int clientId = ThreadLocalRandom.current().nextInt(1, 1000 + 1);
 
     private static final String GATEWAY_API_URL = "http://localhost:5001/api/requests.json";
@@ -41,8 +44,8 @@ public class ClientHttp {
                     "6. Update a file\n" +
                     "7. Delete a file\n" +
                     "8. Exit\n");
-               //     "--------------------\n" +
-                   // "9. Administer Cache");
+            //     "--------------------\n" +
+            // "9. Administer Cache");
 
             int userAnswer = userInput.nextInt();  // Read user input
 

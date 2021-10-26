@@ -1,9 +1,9 @@
 package http;
 
 import cache.Cache;
-import cache.CacheItem;
+import circuit.CircuitBreaker;
+import circuit.State;
 import org.json.JSONArray;
-import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.IOException;
@@ -12,15 +12,14 @@ import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
-import java.util.Scanner;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
 public class RequestParser {
+
     private static final String USER_API_URL = "http://localhost:8080/api/v1/user/";
     private static final String USER_API_URL2 = "http://localhost:9090/api/v2/user/";
     private static final String DOCS_API_URL = "http://localhost:8080/api/v1/docs/";
@@ -56,26 +55,29 @@ public class RequestParser {
      * @throws TimeoutException
      */
     public static HashMap<String, String> processRequest(String responseBody) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        HttpClient client = HttpClient.newHttpClient();
-        HttpRequest request;
+        String roundedAddress = "http://localhost:8982/api/v1/docs/";
+        CircuitBreaker circuitBreaker = HTTPListener.getCircuitBreaker();
 
-        System.out.println("response body" + responseBody);
-        //check which command then proceed
         try {
+            HttpClient client = HttpClient.newHttpClient();
+            HttpRequest request;
+
+            System.out.println("response body" + responseBody);
+            //check which command then proceed
             final JSONObject body = new JSONObject(responseBody);
             int userCommand = body.getInt("command");
             String clientId = body.getString("clientId");
 
-            if (userCommand == 1){
+            if (userCommand == 1) {
 
-            } else if (userCommand == 2){
+            } else if (userCommand == 2) {
                 int userId = body.getInt("userId");
-                String roundedAddress = HTTPListener.getIp(addressUserPool);
+               //  String roundedAddress = HTTPListener.getIp(addressUserPool);
                 request = HttpRequest.newBuilder().uri(URI.create(roundedAddress + userId)).build();
 
                 String requestUri = request.uri().toString();
 
-                if (requestsCache.get(requestUri) != null){
+                if (requestsCache.get(requestUri) != null) {
                     System.out.println("HI FROM CACHE");
                     return requestsCache.get(requestUri);
                 } else {
@@ -93,47 +95,51 @@ public class RequestParser {
                     return result;
                 }
             } else if (userCommand == 3) {
-                String roundedAddress = HTTPListener.getIp(addressDocPool);
+                System.out.println("FAILURE COUNTER - " + ClientHttp.failureCount);
+            //        String roundedAddress = HTTPListener.getIp(addressDocPool);
+                System.out.println("Service address: " + roundedAddress);
                 request = HttpRequest.newBuilder().uri(URI.create(roundedAddress))
                         .version(HttpClient.Version.HTTP_1_1).build();
                 String requestUri = request.uri().toString();
 
-                if (requestsCache.get(requestUri) != null) {
-                    System.out.println("HI FROM CACHE");
-                    return requestsCache.get(requestUri);
+
+                circuitBreaker.evaluateState();
+                if (circuitBreaker.state == State.OPEN) {
+                    HashMap<String, String> serviceDown = new HashMap<>();
+                    serviceDown.put("Circuit Break: ", circuitBreaker.lastFailureResponse);
+                    return serviceDown; // return cached response if the circuit is in OPEN state
                 } else {
-                    CompletableFuture<HttpResponse<String>> response =
-                            client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+                    if (requestsCache.get(requestUri) != null) {
+                        System.out.println("HI FROM CACHE");
+                        return requestsCache.get(requestUri);
+                    } else {
+                        var result = makeCall(client, request);
+                        System.out.println("result " + result);
+                        requestsCache.put(requestUri, result);
+                        System.out.println("HI I JUST JOINED THE CACHE");
 
-                    HashMap<String, String> result = response.thenApply(HttpResponse::body)
-                            .thenApply(RequestParser::parse)
-                            .get(5, TimeUnit.SECONDS);
+                        circuitBreaker.recordSuccess();
 
-                    System.out.println("result " + result);
-
-                    requestsCache.put(requestUri, result);
-                    System.out.println("HI I JUST JOINED THE CACHE");
-                    return result;
+                        return result;
+                    }
                 }
             }
-        } catch (JSONException ex){
-            System.out.println("JSON haven't been parsed");
-            RequestHandler.FAILURE_COUNT += 1;
-            String roundedAddress = HTTPListener.getIp(addressDocPool);
-            RequestHandler.circuitBreak(RequestHandler.FAILURE_COUNT, roundedAddress);
-            System.out.println("ROUNDED" + roundedAddress);
+        } catch (Exception e) {
+            System.out.println("error in parsing");
+            circuitBreaker.recordFailure(e.getMessage());
+          //  throw e;
         }
 //        } else if (userCommand == 9){
 //            String query = queryCache(requestsCache);
 //            System.out.println(query);
-
+//
 //            CompletableFuture<HttpResponse<String>> response =
 //                    client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
 //
 //            HashMap<String, String> result = response.thenApply(HttpResponse::body)
 //                    .thenApply(RequestParser::parse)
 //                    .get(5, TimeUnit.SECONDS);
-
+//
 //            HashMap<String, String> resultQuery = new HashMap<>();
 //            resultQuery.put(clientId, query);
 //            return resultQuery;
@@ -141,6 +147,16 @@ public class RequestParser {
         return null;
     }
 
+    public static HashMap<String, String> makeCall(HttpClient client, HttpRequest request) throws ExecutionException, InterruptedException, TimeoutException {
+        CompletableFuture<HttpResponse<String>> response =
+                client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
+
+        HashMap<String, String> result = response.thenApply(HttpResponse::body)
+                .thenApply(RequestParser::parse)
+                .get(5, TimeUnit.SECONDS);
+
+        return result;
+    }
     /**
      * Method for parsing the incoming json for the client
      * @param responseBody
@@ -178,18 +194,6 @@ public class RequestParser {
         return result;
     }
 
-    /* query language is the following:
-        Insert data:
-            put into <key> <value>
-        Get cache by key:
-            get <key>
-        Delete cache node:
-            delete <key>
-        Get the cache size:
-            show size
-        Display all available data:
-            show all
-     */
 //    public static String queryCache(Cache<String, HashMap<String, String>> cache){
 //        boolean isUserAuthenticated = authenticateUserCache();
 //        while (isUserAuthenticated) {

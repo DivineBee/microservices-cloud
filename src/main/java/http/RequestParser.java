@@ -55,7 +55,7 @@ public class RequestParser {
      * @throws TimeoutException
      */
     public static HashMap<String, String> processRequest(String responseBody) throws IOException, InterruptedException, ExecutionException, TimeoutException {
-        String roundedAddress = "http://localhost:8982/api/v1/docs/";
+        //   String roundedAddress = "http://localhost:8982/api/v1/docs/";
         CircuitBreaker circuitBreaker = HTTPListener.getCircuitBreaker();
 
         try {
@@ -72,7 +72,7 @@ public class RequestParser {
 
             } else if (userCommand == 2) {
                 int userId = body.getInt("userId");
-               //  String roundedAddress = HTTPListener.getIp(addressUserPool);
+                String roundedAddress = HTTPListener.getIp(addressUserPool);
                 request = HttpRequest.newBuilder().uri(URI.create(roundedAddress + userId)).build();
 
                 String requestUri = request.uri().toString();
@@ -96,7 +96,7 @@ public class RequestParser {
                 }
             } else if (userCommand == 3) {
                 System.out.println("FAILURE COUNTER - " + ClientHttp.failureCount);
-            //        String roundedAddress = HTTPListener.getIp(addressDocPool);
+                String roundedAddress = HTTPListener.getIp(addressDocPool);
                 System.out.println("Service address: " + roundedAddress);
                 request = HttpRequest.newBuilder().uri(URI.create(roundedAddress))
                         .version(HttpClient.Version.HTTP_1_1).build();
@@ -129,21 +129,6 @@ public class RequestParser {
             circuitBreaker.recordFailure(e.getMessage());
           //  throw e;
         }
-//        } else if (userCommand == 9){
-//            String query = queryCache(requestsCache);
-//            System.out.println(query);
-//
-//            CompletableFuture<HttpResponse<String>> response =
-//                    client.sendAsync(request, HttpResponse.BodyHandlers.ofString());
-//
-//            HashMap<String, String> result = response.thenApply(HttpResponse::body)
-//                    .thenApply(RequestParser::parse)
-//                    .get(5, TimeUnit.SECONDS);
-//
-//            HashMap<String, String> resultQuery = new HashMap<>();
-//            resultQuery.put(clientId, query);
-//            return resultQuery;
-//            }
         return null;
     }
 
@@ -193,44 +178,4 @@ public class RequestParser {
 
         return result;
     }
-
-//    public static String queryCache(Cache<String, HashMap<String, String>> cache){
-//        boolean isUserAuthenticated = authenticateUserCache();
-//        while (isUserAuthenticated) {
-//            Scanner userInput = new Scanner(System.in);
-//            System.out.println("Insert query:");
-//            String answer = userInput.nextLine();
-//            String[] query = answer.strip().split(" ");
-//        // Insert data to cache
-//            if (query[0].equalsIgnoreCase("put")) {
-//                String key = query[1];
-//                String value = query[2];
-//                HashMap<String, String> valueMap = new HashMap<>();
-//                valueMap.put(key, value);
-//                cache.put(key, valueMap);
-//                System.out.println("Inserted successfully");
-//                return "Inserted successfully";
-//            } else if (query[0].equalsIgnoreCase("get")) {
-//                String key =  query[1];
-//                System.out.println("Here is the cache value:" + cache.get(key));
-//            } else if (query[0].equalsIgnoreCase("delete")){
-//                String key =  query[1];
-//                CacheItem node = cache.getMap().get(key);
-//                cache.deleteNode(node);
-//                System.out.println("Node deleted successfully");
-//                return "Node deleted successfully";
-//            } else if (query[0].equalsIgnoreCase("show") && query[1].equalsIgnoreCase("size")){
-//                //System.out.println("Cache size is: " + cache.size());
-//                return "Cache size is: " + cache.size();
-//            } else if (query[0].equalsIgnoreCase("show") && query[1].equalsIgnoreCase("all")){
-////                cache.getMap().entrySet().forEach(entry -> {
-////                    System.out.println(entry.getKey() + " " + entry.getValue());
-////                });
-//                return Arrays.toString(cache.getMap().entrySet().toArray());
-//            } else if (query[0].equalsIgnoreCase("exit")) {
-//                isUserAuthenticated = false;
-//            }
-//        }
-//        return null;
-//    }
 }

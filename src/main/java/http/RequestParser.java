@@ -1,6 +1,7 @@
 package http;
 
 import cache.Cache;
+import static cache.ConsistentHashing.*;
 import circuit.CircuitBreaker;
 import circuit.State;
 import org.json.JSONArray;
@@ -13,6 +14,7 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
@@ -39,6 +41,15 @@ public class RequestParser {
     };
 
     public static Cache<String, HashMap<String, String>> requestsCache = new Cache<>(400);
+    public static Cache<String, HashMap<String, String>> requestsCache2 = new Cache<>(400);
+    public static Cache<String, HashMap<String, String>> requestsCache3 = new Cache<>(400);
+
+    public static ArrayList<Cache<String, HashMap<String, String>>> cacheList = new ArrayList<>();
+    static {
+        cacheList.add(requestsCache);
+        cacheList.add(requestsCache2);
+        cacheList.add(requestsCache3);
+    }
 
     /**
      * Helper method of processing client's request, such as reading its contents and parsing.
@@ -114,8 +125,20 @@ public class RequestParser {
                         return requestsCache.get(requestUri);
                     } else {
                         var result = makeCall(client, request);
+
+                        int resultHash = getHash(result.toString());
+                        var routedCache = getCache(result.toString());
+
+                        if (routedCache.endsWith("1")){
+                            requestsCache.put(String.valueOf(resultHash), result);
+                        } else if (routedCache.endsWith("2")) {
+                            requestsCache2.put(String.valueOf(resultHash), result);
+                        } else if (routedCache.endsWith("3")) {
+                            requestsCache3.put(String.valueOf(resultHash), result);
+                        }
+                        propagateChange(cacheList, String.valueOf(resultHash), result);
                         System.out.println("result " + result);
-                        requestsCache.put(requestUri, result);
+                       // requestsCache.put(requestUri, result);
                         System.out.println("HI I JUST JOINED THE CACHE");
 
                         circuitBreaker.recordSuccess();

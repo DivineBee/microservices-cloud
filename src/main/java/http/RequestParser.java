@@ -2,6 +2,8 @@ package http;
 
 import cache.Cache;
 import static cache.ConsistentHashing.*;
+
+import cache.ConsistentHashing;
 import circuit.CircuitBreaker;
 import circuit.State;
 import org.json.JSONArray;
@@ -22,9 +24,9 @@ import java.util.concurrent.TimeoutException;
 
 public class RequestParser {
 
-    private static final String USER_API_URL = "http://localhost:8080/api/v1/user/";
+    private static final String USER_API_URL = "http://localhost:8050/api/v1/user/";
     private static final String USER_API_URL2 = "http://localhost:9090/api/v2/user/";
-    private static final String DOCS_API_URL = "http://localhost:8080/api/v1/docs/";
+    private static final String DOCS_API_URL = "http://localhost:8050/api/v1/docs/";
     private static final String DOCS_API_URL2 = "http://localhost:9090/api/v2/docs/";
 
     // primitive of service registry
@@ -113,7 +115,6 @@ public class RequestParser {
                         .version(HttpClient.Version.HTTP_1_1).build();
                 String requestUri = request.uri().toString();
 
-
                 circuitBreaker.evaluateState();
                 if (circuitBreaker.state == State.OPEN) {
                     HashMap<String, String> serviceDown = new HashMap<>();
@@ -128,6 +129,7 @@ public class RequestParser {
 
                         int resultHash = getHash(result.toString());
                         var routedCache = getCache(result.toString());
+                        System.out.println(resultHash + " ### " + routedCache);
 
                         if (routedCache.endsWith("1")){
                             requestsCache.put(String.valueOf(resultHash), result);

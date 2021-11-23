@@ -7,7 +7,7 @@ import static http.RequestParser.*;
 public class ConsistentHashing {
 
     //List of caches to be added to the Hash ring
-    private static String[] caches = { "Cache.01", "Cache.02", "Cache.03" };
+    public static String[] caches = { "Cache.01", "Cache.02", "Cache.03" };
 
     //key represents the hash value of the cache and value represents the cache
     private static SortedMap<Integer, String> sortedMap = new TreeMap<Integer, String>();
@@ -26,6 +26,7 @@ public class ConsistentHashing {
     public static String getCache(String key) {
         // Get the hash value of the key
         int hash = getHash(key);
+       // System.out.println("CACHE - " + hash);
         //Get all Maps that are larger than the Hash value
         SortedMap<Integer, String> subMap = sortedMap.tailMap(hash);
         if (subMap.isEmpty()) {
@@ -71,7 +72,7 @@ public class ConsistentHashing {
                                     String resultHash, HashMap<String, String> result){
         for (Cache<String, HashMap<String, String>> cache : cacheArrayList){
             replicate(cache, resultHash, result);
-            System.out.println(cache.getMap());
+            System.out.println("Replication to caches was done " + cache.getMap().toString());
         }
     }
 

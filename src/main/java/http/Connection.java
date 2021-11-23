@@ -18,8 +18,8 @@ import java.util.Map;
 
 public class Connection {
 
-    private static final String USER_API_URL = "http://localhost:8080/api/v1/user";
-    private static final String DOCS_API_URL = "http://localhost:8080/api/v1/docs/";
+    private static final String USER_API_URL = "http://localhost:8050/api/v1/user";
+    private static final String DOCS_API_URL = "http://localhost:8050/api/v1/docs/";
     private static final String GATEWAY_API_URL = "http://localhost:5001/api/requests.json";
 
     public static void main(String[] args) throws IOException, InterruptedException {

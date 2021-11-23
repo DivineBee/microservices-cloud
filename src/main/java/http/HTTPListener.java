@@ -4,8 +4,13 @@ import cache.Cache;
 import cache.CacheItem;
 import circuit.CircuitBreaker;
 import com.sun.net.httpserver.HttpServer;
+
+import java.io.BufferedOutputStream;
+import java.io.DataOutputStream;
 import java.io.IOException;
+import java.io.PrintWriter;
 import java.net.InetSocketAddress;
+import java.net.Socket;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Scanner;
@@ -38,7 +43,12 @@ public class HTTPListener {
      * the thread pool so with the possibility to reuse them.
      * @param args
      */
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
+        Socket socket = new Socket("localhost", 5000);
+        DataOutputStream os = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+        os.writeBytes("{\"message\": {\"someField\":\"someValue\"} }" + '\n');
+        os.flush();
+        socket.close();
 
         HttpServer httpServer;
         Scanner binaryAnswer = new Scanner(System.in);

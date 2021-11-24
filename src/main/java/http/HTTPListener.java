@@ -4,6 +4,7 @@ import cache.Cache;
 import cache.CacheItem;
 import circuit.CircuitBreaker;
 import com.sun.net.httpserver.HttpServer;
+import org.json.JSONObject;
 
 import java.io.BufferedOutputStream;
 import java.io.DataOutputStream;
@@ -35,6 +36,27 @@ public class HTTPListener {
         return circuitBreaker;
     }
 
+    public static Socket socket;
+    public static  DataOutputStream os;
+    static {
+        try {
+            socket = new Socket("localhost", 5000);
+            os = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+    public static void sendLog(DataOutputStream os, String message){
+        try {
+            os.writeBytes(message);
+            os.flush();
+            socket.close();
+        } catch (IOException e){
+            System.err.println(e);
+        }
+    }
+
     /**
      * Runner method of the gateway, opens up the connection to be available for the clients.
      * Creates the http server on the specified port, with the second parameter being the backlog.
@@ -44,11 +66,9 @@ public class HTTPListener {
      * @param args
      */
     public static void main(String[] args) throws IOException {
-        Socket socket = new Socket("localhost", 5000);
-        DataOutputStream os = new DataOutputStream(new BufferedOutputStream(socket.getOutputStream()));
-        os.writeBytes("{\"message\": {\"someField\":\"someValue\"} }" + '\n');
-        os.flush();
-        socket.close();
+        int authorizationCounter = 0;
+        sendLog(os,"{\"message\": \"Gateway started\"," +
+                " \"status\":\"OK\" }");
 
         HttpServer httpServer;
         Scanner binaryAnswer = new Scanner(System.in);
@@ -58,6 +78,8 @@ public class HTTPListener {
             httpServer.createContext("/", new RequestHandler());
             httpServer.start();
         } catch (IOException e) {
+            sendLog(os,"{\"message\": \"Gateway Error\", \"type\": \"IOException\", "+
+                    " \"status\":\"BAD\"}");
             e.printStackTrace();
         }
 
@@ -66,6 +88,9 @@ public class HTTPListener {
             String answer = binaryAnswer.next();
             if (answer.equalsIgnoreCase("Y")) {
                 queryCache(RequestParser.requestsCache);
+                authorizationCounter+=1;
+                sendLog(os,"{\"message\": \"Cache Authorized\", \"type\":\"Entry\", " +
+                        " \"status\":\"OK\", \"NrOfTimes\":\""+ authorizationCounter +"\"}");
             } else {
                 System.out.println("OK.");
             }

@@ -7,6 +7,9 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.util.HashMap;
 
+import static http.HTTPListener.os;
+import static http.HTTPListener.sendLog;
+
 public class RequestHandler implements HttpHandler {
     /**
      * handles the incoming request from client, turns the load balancing and sends back and forth all the
@@ -26,6 +29,10 @@ public class RequestHandler implements HttpHandler {
             HashMap<String, String> responseBody = RequestParser.processRequest(requestBody);
             // send response from microservice
             sendResponse(httpExchange, 200, "Response --" + responseBody);
+            if (responseBody == null){
+                RequestParser.addressDocPool.remove(roundedAddress);
+                String availableAddress = HTTPListener.getIp(RequestParser.addressDocPool);
+            }
         } catch (Exception e) {
             e.printStackTrace();
         } finally {
@@ -68,6 +75,8 @@ public class RequestHandler implements HttpHandler {
             outputStream.write(response.getBytes());
             httpExchange.close();
         } catch (Exception e){
+            sendLog(os,"{\"message\": \"Handler Error\", \"type\":\"Exception from microservice\", " +
+                    " \"status\":\"BAD\"}");
             System.err.println("Whoops, there is no response from microservice :(");
         }
         finally {

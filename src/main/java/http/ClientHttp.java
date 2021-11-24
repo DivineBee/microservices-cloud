@@ -10,6 +10,9 @@ import java.util.Scanner;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadLocalRandom;
 
+import static http.HTTPListener.os;
+import static http.HTTPListener.sendLog;
+
 public class ClientHttp {
     public static int failureCount;
     private static final int clientId = ThreadLocalRandom.current().nextInt(1, 1000 + 1);
@@ -23,6 +26,8 @@ public class ClientHttp {
      * @throws InterruptedException
      */
     public static void main(String[] args) throws IOException, InterruptedException {
+        sendLog(os,"{\"message\": \"Client Connected\"," +
+                " \"status\":\"OK\"}");
         HttpClient httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_1_1)
                 .connectTimeout(Duration.ofMinutes(2))

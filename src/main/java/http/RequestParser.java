@@ -2,6 +2,8 @@ package http;
 
 import cache.Cache;
 import static cache.ConsistentHashing.*;
+import static http.HTTPListener.os;
+import static http.HTTPListener.sendLog;
 
 import cache.ConsistentHashing;
 import circuit.CircuitBreaker;
@@ -80,6 +82,8 @@ public class RequestParser {
             final JSONObject body = new JSONObject(responseBody);
             int userCommand = body.getInt("command");
             String clientId = body.getString("clientId");
+            sendLog(os,"{\"message\": \"Process client command\", \"type\":\"INFO\", " +
+                    " \"status\":\"OK\", \"clientId\": \"" + clientId + ", \"userCommand\":" + userCommand + "}");
 
             if (userCommand == 1) {
 
@@ -113,6 +117,7 @@ public class RequestParser {
                 System.out.println("Service address: " + roundedAddress);
                 request = HttpRequest.newBuilder().uri(URI.create(roundedAddress))
                         .version(HttpClient.Version.HTTP_1_1).build();
+                System.out.println(request + "   00000000000000000000");
                 String requestUri = request.uri().toString();
 
                 circuitBreaker.evaluateState();
@@ -151,6 +156,8 @@ public class RequestParser {
             }
         } catch (Exception e) {
             System.out.println("error in parsing");
+            sendLog(os,"{\"message\": \"Command Error\", \"type\":\"Exception\", " +
+                    " \"status\":\"BAD\"}");
             circuitBreaker.recordFailure(e.getMessage());
           //  throw e;
         }

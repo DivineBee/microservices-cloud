@@ -1,0 +1,47 @@
+version: '3.7'
+
+services:
+  elasticsearch:
+    image: elasticsearch:7.9.2
+    environment:
+      - discovery.type=single-node
+    ports:
+      - '9200:9200'
+    # ulimits:
+    #   memlock:
+    #     soft: -1
+    #     hard: -1
+    
+  kibana:
+    image: 'kibana:7.9.2'
+    ports:
+      - '5601:5601'
+    depends_on:
+      - elasticsearch
+
+  logstash:
+    image: logstash:7.9.2
+    # command: sh -c 'curl -L -o /usr/share/logstash/lib/mysql-connector-java-5.1.47.jar https://repo1.maven.org/maven2/mysql/mysql-connector-java/5.1.47/mysql-connector-java-5.1.47.jar'
+    ports:
+      - '5000:5000'
+    volumes:
+      - type: bind
+        source: ./logstash_pipeline/
+        target: /usr/share/logstash/pipeline
+        read_only: true
+
+  # apm-server:
+  #   image: docker.elastic.co/apm/apm-server:7.9.2
+  #   depends_on:
+  #     - elasticsearch
+  #     - kibana
+  #   ports:
+  #   - 8200:8200
+  #   command: >
+  #      apm-server -e
+  #        -E apm-server.rum.enabled=true
+  #        -E setup.kibana.host=kibana:5601
+  #        -E setup.template.settings.index.number_of_replicas=0
+  #        -E apm-server.kibana.enabled=true
+  #        -E apm-server.kibana.host=kibana:5601
+  #        -E output.elasticsearch.hosts=["elasticsearch:9200"]

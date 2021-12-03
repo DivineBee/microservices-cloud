@@ -1,0 +1,12 @@
+http://127.0.0.1:8000/docs
+http://127.0.0.1:8000
+enable virtual env .\env\Scripts\activate
+run app server uvicorn app.main:app --reload
+
+docker clear all cache/containers    docker system prune -a
+docker run and build containers     docker-compose up -d
+docker shut down all                 docker-compose down
+
+
+http://localhost:8050/api/v1/docs/docs
+http://localhost:8050/api/v1/user/docs

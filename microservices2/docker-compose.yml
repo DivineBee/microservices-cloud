@@ -1,0 +1,128 @@
+version: '3.7'
+
+services:
+  doc_service:
+    build: ./crud_service
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 9000
+    volumes:
+      - ./crud_service/:/app/
+    ports:
+      - 9001:9000
+    environment:
+      - DATABASE_URI=postgresql://postgres:my_password@postgresql_master/docs_db_dev
+      - USER_SERVICE_HOST_URL=http://user_service:9000/api/v2/user/
+    depends_on:
+        - postgresql_master
+
+  user_service:
+    build: ./user_service
+    command: uvicorn app.main:app --reload --host 0.0.0.0 --port 9000
+    volumes:
+      - ./user_service/:/app/
+    ports:
+      - 9002:9000
+    environment:
+      - DATABASE_URI=postgresql://postgres:my_password@postgresql_master_user/users_db_dev
+    depends_on:
+      - postgresql_master_user
+
+  postgresql_master:
+    image: docker.io/bitnami/postgresql:11
+    ports:
+      - '4556:5432'
+    volumes:
+      - 'postgresql_master_data:/bitnami/postgresql'
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=root
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=my_password
+      - POSTGRESQL_DATABASE=docs_db_dev
+      - ALLOW_EMPTY_PASSWORD=yes
+  postgresql_slave:
+    image: docker.io/bitnami/postgresql:11
+    ports:
+      - '4555:5432'
+    depends_on:
+      - postgresql_master
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=root
+      - POSTGRESQL_MASTER_HOST=postgresql_master
+      - POSTGRESQL_PASSWORD=my_password
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - ALLOW_EMPTY_PASSWORD=yes
+  postgresql_slave2:
+    image: docker.io/bitnami/postgresql:11
+    ports:
+      - '4545:5432'
+    depends_on:
+      - postgresql_master
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=root
+      - POSTGRESQL_MASTER_HOST=postgresql_master
+      - POSTGRESQL_PASSWORD=my_password
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - ALLOW_EMPTY_PASSWORD=yes
+
+  postgresql_master_user:
+    image: docker.io/bitnami/postgresql:11
+    ports:
+      - '4558:5432'
+    volumes:
+      - 'postgresql_master_data_user:/bitnami/postgresql'
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=master
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=root
+      - POSTGRESQL_USERNAME=postgres
+      - POSTGRESQL_PASSWORD=my_password
+      - POSTGRESQL_DATABASE=users_db_dev
+      - ALLOW_EMPTY_PASSWORD=yes
+  postgresql_slave_user:
+    image: docker.io/bitnami/postgresql:11
+    ports:
+      - '4559:5432'
+    depends_on:
+      - postgresql_master_user
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=root
+      - POSTGRESQL_MASTER_HOST=postgresql_master_user
+      - POSTGRESQL_PASSWORD=my_password
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - ALLOW_EMPTY_PASSWORD=yes
+  postgresql_slave_user2:
+    image: docker.io/bitnami/postgresql:11
+    ports:
+      - '4569:5432'
+    depends_on:
+      - postgresql_master_user
+    environment:
+      - POSTGRESQL_REPLICATION_MODE=slave
+      - POSTGRESQL_REPLICATION_USER=repl_user
+      - POSTGRESQL_REPLICATION_PASSWORD=root
+      - POSTGRESQL_MASTER_HOST=postgresql_master_user
+      - POSTGRESQL_PASSWORD=my_password
+      - POSTGRESQL_MASTER_PORT_NUMBER=5432
+      - ALLOW_EMPTY_PASSWORD=yes
+
+  nginx:
+    image: nginx:latest
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./nginx_config.conf:/etc/nginx/conf.d/default.conf
+    depends_on:
+      - user_service
+      - doc_service
+
+volumes:
+  postgresql_master_data:
+    driver: local
+  postgresql_master_data_user:

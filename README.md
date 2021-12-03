@@ -14,11 +14,11 @@ Also, there is done cache replication, if data is written to a cache then others
 ## Microservices 🔬
 
 Microservices are written in Python, FastApi, Nginx and connected to PostgreSQL. Every microservice is inside a container. Microservice nodes are the ones that do the work a client is interested in. They receive tasks, process them and send back responses. Processing requests is usually costly so we imply the help of gateways and caches. There are 4 currently running microservices. Two are for document logic, and two are for user logic. 
-Documents microservices are depending on user microservices. After running docker-compose they can be accessed on local machine:
-http://localhost:8050/api/v1/docs/docs
-http://localhost:8050/api/v1/user/docs
-http://localhost:9090/api/v2/docs/docs
-http://localhost:9090/api/v2/user/docs
+Documents microservices are depending on user microservices. After running docker-compose they can be accessed on local machine:  
+http://localhost:8050/api/v1/docs/docs  
+http://localhost:8050/api/v1/user/docs  
+http://localhost:9090/api/v2/docs/docs  
+http://localhost:9090/api/v2/user/docs  
 There are few endpoints you can try on. But first create users in the user microservices to be able to create documents, because documents can't be created if they have no user.
 ## Docker 🐳
 
